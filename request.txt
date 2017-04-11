@@ -1,0 +1,31 @@
+* Hostname discordapp.com was found in DNS cache
+*   Trying 104.16.59.5...
+* Connected to discordapp.com (104.16.59.5) port 443 (#0)
+* Cipher selection: ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH
+* NPN, negotiated HTTP1.1
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+* Server certificate:
+* 	 subject: OU=Domain Control Validated; OU=PositiveSSL; CN=discordapp.com
+* 	 start date: Feb 24 00:00:00 2017 GMT
+* 	 expire date: Mar 11 23:59:59 2020 GMT
+* 	 subjectAltName: discordapp.com matched
+* 	 issuer: C=GB; ST=Greater Manchester; L=Salford; O=COMODO CA Limited; CN=COMODO RSA Domain Validation Secure Server CA
+* 	 SSL certificate verify result: unable to get local issuer certificate (20), continuing anyway.
+> GET /api/channels/230833430827499520/messages HTTP/1.1
+Host: discordapp.com
+Accept: */*
+Authorization: Bot E4P321DdSW9xPCYWJ6mYrnjZUbCdgR_D
+
+< HTTP/1.1 401 UNAUTHORIZED
+< Date: Tue, 11 Apr 2017 14:37:13 GMT
+< Content-Type: application/json
+< Content-Length: 43
+< Connection: keep-alive
+< Set-Cookie: __cfduid=dab14787a0d8a737f4a489d90c815529d1491921433; expires=Wed, 11-Apr-18 14:37:13 GMT; path=/; domain=.discordapp.com; HttpOnly
+< Strict-Transport-Security: max-age=31536000; includeSubDomains
+< Via: 1.1 google
+< Alt-Svc: clear
+< Server: cloudflare-nginx
+< CF-RAY: 34deaebd3d325a4a-BOS
+< 
+* Connection #0 to host discordapp.com left intact
