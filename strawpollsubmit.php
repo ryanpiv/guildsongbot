@@ -1,11 +1,20 @@
 <?php
 
-$url = 'https://discordapp.com/api/channels/300448798365450240/messages?limit=100';
+$url = 'https://strawpoll.me/api/v2/polls';
+
+$options = Array();
+foreach ($_POST as $key => $value) {
+	array_push($options, $value);
+}
+print_r($options);
+
+$headers[] = $options;
+$headers[] = "'multi': false";
 
 $ch = curl_init();
 curl_setopt_array($ch, array(
 	CURLOPT_URL => $url,
-	CURLOPT_HTTPHEADER => array('Authorization: Bot MzAwODEwOTE1NTg0OTMzODg4.C-0eXA.B6uha44_ewJlbJ4cTHfbOtFy2TQ'),
+	CURLOPT_HTTPHEADER => array($headers),
 	CURLOPT_RETURNTRANSFER => 1,
 	CURLOPT_FOLLOWLOCATION => 1,
 	CURLOPT_VERBOSE => 1,

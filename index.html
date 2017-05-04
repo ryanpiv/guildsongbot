@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+</head>
+
+<body>
+	<ul id="messages"></ul>
+    <script>
+    $.ajax({
+            url: 'test.php'
+        }).done(function(data) {
+        	console.log(JSON.parse(data));
+        	var messages = JSON.parse(data);
+        	var members = [];
+        	var votesArray = [];
+
+        	messages.forEach(function(message) {
+        		var li = document.createElement('li');
+        		if(message.embeds){
+        			if(message.embeds[0]){
+        				if(checkDups(members, message.author.id) == false && message.author.id !='301368522834182145'){
+        					var vote = {};
+        					members.push(message.author.id);
+
+        					$(li).text(message.author.username + ', ' + message.embeds[0].url);
+        					$('#messages').append(li);
+
+        					vote['author'] = message.author;
+        					vote['embed'] = message.embeds[0];
+        					votesArray.push(vote);
+        				}
+        			}
+        		}
+        	});
+        	if(votesArray.length > 0){
+    			submitVotes(votesArray);
+    		}
+        });
+
+    function checkDups(members, memberCheck){
+    	var status = false;
+    	members.forEach(function(member) {
+    		if(memberCheck == member){
+    			status = true;
+    		}
+    	});
+    	return status;
+     }
+
+     function submitVotes(votesArray){
+     	var url = 'https://strawpoll.me/api/v2/polls';
+     	var date = new Date();
+     	var pollTitle = 'Disappointed_SongVote_' + date.toString();
+     	var form_data = new FormData();
+     	votesArray.forEach(function(vote, index){
+     		form_data.append(index, vote);
+     	});
+
+     	console.log(form_data);
+
+     	
+     	$.ajax({
+            url: 'strawpollsubmit.php',
+            cache: false,
+	        contentType: false,
+	        processData: false,
+	        data: form_data,
+	        type: "POST"
+        }).done(function(response){
+
+        });
+     }
+    </script>
+    
+</body>
+
+</html>
