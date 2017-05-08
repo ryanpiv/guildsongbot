@@ -1,3 +1,15 @@
 .item{
 	height:250 !important;
+	position: relative;
+}
+.btnVote{
+	width:100%;
+	text-align: center;
+	color:white;
+	background-color: red;
+	height:40px;
+	cursor:pointer;
+}
+.container-fluid{
+	padding:0 !important;
 }

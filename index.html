@@ -5,19 +5,30 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
     <link href="css.css" rel="stylesheet">
+    <link href="css.css" rel="stylesheet">
+    <link href="svgcheckbx.css" rel="stylesheet">
 </head>
 
 <body>
-    <div id="votesContainer" class="container-fluid"></div>
+    <div id="votesContainer" class="container-fluid">
+        <div class="col-lg-12 btnVote" id="btn-vote">
+            <p>Vote</p>
+        </div>
+        <div class="item col-lg-3 ac-custom ac-checkbox ac-checkmark">
+            <label for="cb6"></label>
+            <input id="cb6_" name="cb6_" type="checkbox">
+        </div>
+    </div>
     <script>
+    var votesArray = [];
+
     $.ajax({
         url: 'test.php'
     }).done(function(data) {
         var messages = JSON.parse(data);
         var members = [];
-        var votesArray = [];
+        votesArray = [];
 
         messages.forEach(function(message) {
             if (message.embeds) {
@@ -67,6 +78,11 @@
         });
         form_data.append('options', JSON.stringify(optionsArray));
 
+        //strawPollSubmit(form_data);
+        processStrawPollSubmit(testResponse);
+    }
+
+    function strawPollSubmit(discordData) {
         $.ajax({
             url: 'strawpollsubmit.php',
             cache: false,
@@ -75,26 +91,76 @@
             data: form_data,
             type: "POST"
         }).done(function(response) {
-            response = JSON.parse(response);
-            for (var i = 0; i < response.options.length; i++) {
-                try {
-                    var item = document.createElement('div');
-                    var iframe = document.createElement('iframe');
+            processStrawPollSubmit(JSON.parse(response));
+        });
+    }
 
-                    $(iframe).addClass('embed-responsive-item');
-                    $(item).addClass('col-lg-3 col-md-3 item embed-responsive');
+    function processStrawPollSubmit(strawPollData) {
+        for (var i = 0; i < strawPollData.options.length; i++) {
+            try {
+                var item = document.createElement('div');
+                var iframe = document.createElement('iframe');
+                var lbl = document.createElement('label');
+                var input = document.createElement('input');
 
-                    var yt_id = formatYoutubeUrl(response.options[i]);
-                    $(iframe).attr('src', 'https://www.youtube.com/embed/' + yt_id);
+                /*<label for="cb6"></label>
+            <input id="cb6" name="cb6" type="checkbox">*/
 
-                    $(item).append(iframe);
-                    $('#votesContainer').append(item);
-                } catch (err) {
-                    console.log(err);
+                $(iframe).addClass('embed-responsive-item');
+                $(item).addClass('col-lg-3 col-md-3 item embed-responsive ac-custom ac-checkbox ac-checkmark');
+                $(lbl).attr('for', 'cb' + i);
+                $(input).attr('id', 'cb' + i);
+                $(input).attr('name', 'cb' + i);
+                $(input).attr('type', 'checkbox');
+
+                $(item).append(lbl);
+                $(item).append(input);
+
+                var yt_id = formatYoutubeUrl(strawPollData.options[i]);
+                $(iframe).attr('src', 'https://www.youtube.com/embed/' + yt_id);
+
+                $(item).append(iframe);
+                $('#votesContainer').append(item);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+        runSVG();
+
+        function getSelected() {
+            var selected = [];
+            $('.item input:checked').each(function() {
+                selected.push($(this).attr('name'));
+            });
+        }
+
+        function getStrawPoll(id, vote) {
+            $.ajax({
+                url: 'get-poll.php?search=' + id
+            }).done(function(response) {
+                response = JSON.parse(response);
+                for (var i = 0; i < response.length; i++) {
+
                 }
+            });
+        }
 
+        function reset(el) {
+            Array.prototype.slice.call(el.parentNode.querySelectorAll('svg > path')).forEach(function(el) {
+                el.parentNode.removeChild(el);
+            });
+        }
+
+        $('input[type="checkbox"]').on('change', function() {
+            $('input[type="checkbox"]').not(this).prop('checked', false);
+            var items = $('input[type="checkbox"]').not(this);
+            for(var i = 0; i < items.length; i++){
+                reset(items[i]);
             }
         });
+
+        
+
     }
     </script>
 </body>
@@ -111,3 +177,4 @@ var testResponse = {
     "captcha": false
 };
 </script>
+<script src="svgcheckbx.js"></script>
