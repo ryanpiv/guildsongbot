@@ -1,13 +1,24 @@
+body{
+	background-color: #2f2e28;
+}
 .item{
 	height:250 !important;
 	position: relative;
 }
-.btnVote{
-	width:100%;
+.btnVote, .lblTimer, .btnResults{
 	text-align: center;
 	color:white;
-	background-color: red;
 	height:40px;
+}
+.btnVote{
+	background-color: #e74c3c;
+	cursor:pointer;
+}
+.lblTimer{
+	background-color: #2ecc71;
+}
+.btnResults{
+	background-color: #3498db;
 	cursor:pointer;
 }
 .container-fluid{

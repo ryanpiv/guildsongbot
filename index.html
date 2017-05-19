@@ -12,42 +12,77 @@
 
 <body>
     <div id="votesContainer" class="container-fluid">
-        <div class="col-lg-12 btnVote" id="btn-vote">
+        <div class="col-lg-3 col-md-3 lblTimer" id="lbl-timer">
+            <p id="p-lbl-timer"></p>
+        </div>
+        <div class="col-lg-6 col-md-6 btnVote" id="btn-vote">
             <p>Vote</p>
         </div>
-        <div class="item col-lg-3 ac-custom ac-checkbox ac-checkmark">
-            <label for="cb6"></label>
-            <input id="cb6_" name="cb6_" type="checkbox">
+        <div class="col-lg-3 col-md-3 btnResults" id="btn-results">
+            <p id="p-btn-results">Results</p>
         </div>
     </div>
     <script>
+    var strawPollId = '';
     var votesArray = [];
 
-    $.ajax({
-        url: 'test.php'
-    }).done(function(data) {
-        var messages = JSON.parse(data);
-        var members = [];
-        votesArray = [];
+    function init() {
+        //1. Check for existing, active poll
+        //Polls have 1 week submission / voting periods and 1 month of active time
+        //2.a After the 1 week submission / voting period, display results time to next vote in results
+        //2.b Also, begin gathering new data to form next poll with.  After the 1 month of active time, the next poll will be created.
 
-        messages.forEach(function(message) {
-            if (message.embeds) {
-                if (message.embeds[0]) {
-                    if (checkDups(members, message.author.id) == false && message.author.id != '301368522834182145') {
-                        var vote = {};
-                        members.push(message.author.id);
+        //There will always be discord data displayed, whether it be active to be voted upon or not.
+        //Results from previous poll are displayed
+        //Timer will either display active voting period or time to next voting period.
+        //Need a description to replace vote button during submission period.  Vote button should only say vote during voting period
+        getActivePoll();
+    }
 
-                        vote['author'] = message.author;
-                        vote['embed'] = message.embeds[0];
-                        votesArray.push(vote);
-                    }
-                }
+    function getActivePoll() {
+        $.ajax({
+            url: 'data/get-active-poll.php'
+        }).done(function(data) {
+            if (data.length > 0) {
+                //found an active poll
+                debugger;
+                strawPollId = data[0].strawpollid;
+                getStrawPoll(strawPollId);
+            } else {
+                //no active polls, create one
+                debugger;
+                createPoll();
             }
         });
-        if (votesArray.length > 0) {
-            submitVotes(votesArray);
-        }
-    });
+    }
+
+    function createPoll() {
+        $.ajax({
+            url: 'data/get-discord-messages.php'
+        }).done(function(data) {
+            var messages = JSON.parse(data);
+            var members = [];
+            votesArray = [];
+
+            messages.forEach(function(message) {
+                if (message.embeds) {
+                    if (message.embeds[0]) {
+                        if (checkDups(members, message.author.id) == false && message.author.id != '301368522834182145') {
+                            var vote = {};
+                            members.push(message.author.id);
+
+                            vote['author'] = message.author;
+                            vote['embed'] = message.embeds[0];
+                            votesArray.push(vote);
+                        }
+                    }
+                }
+            });
+            if (votesArray.length > 0) {
+                submitVotes(votesArray);
+            }
+        });
+    }
 
     function checkDups(members, memberCheck) {
         var status = false;
@@ -65,7 +100,6 @@
     }
 
     function submitVotes(votesArray) {
-        var url = 'https://strawpoll.me/api/v2/polls';
         var date = new Date();
         var pollTitle = 'Disappointed_SongVote';
         var form_data = new FormData();
@@ -78,43 +112,47 @@
         });
         form_data.append('options', JSON.stringify(optionsArray));
 
-        //strawPollSubmit(form_data);
-        processStrawPollSubmit(testResponse);
+        strawPollSubmit(form_data);
+        //processStrawPollSubmit(testResponse);
     }
 
     function strawPollSubmit(discordData) {
         $.ajax({
-            url: 'strawpollsubmit.php',
+            url: 'data/post-strawpoll.php',
             cache: false,
             contentType: false,
             processData: false,
-            data: form_data,
+            data: discordData,
             type: "POST"
         }).done(function(response) {
             processStrawPollSubmit(JSON.parse(response));
+
         });
     }
 
     function processStrawPollSubmit(strawPollData) {
+        strawPollId = strawPollData.id;
+        votesArray = strawPollData.votes;
         for (var i = 0; i < strawPollData.options.length; i++) {
+            var item = document.createElement('div');
+            var input = document.createElement('input');
+
+            $(item).addClass('col-lg-3 col-md-3 item embed-responsive ac-custom ac-checkbox ac-checkmark');
+            $(lbl).attr('for', 'cb' + i);
+            $(input).attr('id', 'cb' + i);
+            $(input).attr('name', 'cb' + i);
+            $(input).attr('type', 'checkbox');
+            $(input).data('votenum', i);
+
+            $(item).append(lbl);
+            $(item).append(input);
+
             try {
-                var item = document.createElement('div');
                 var iframe = document.createElement('iframe');
                 var lbl = document.createElement('label');
-                var input = document.createElement('input');
-
-                /*<label for="cb6"></label>
-            <input id="cb6" name="cb6" type="checkbox">*/
 
                 $(iframe).addClass('embed-responsive-item');
-                $(item).addClass('col-lg-3 col-md-3 item embed-responsive ac-custom ac-checkbox ac-checkmark');
-                $(lbl).attr('for', 'cb' + i);
-                $(input).attr('id', 'cb' + i);
-                $(input).attr('name', 'cb' + i);
-                $(input).attr('type', 'checkbox');
-
-                $(item).append(lbl);
-                $(item).append(input);
+                $(iframe).attr('id', 'if_' + i);
 
                 var yt_id = formatYoutubeUrl(strawPollData.options[i]);
                 $(iframe).attr('src', 'https://www.youtube.com/embed/' + yt_id);
@@ -123,6 +161,16 @@
                 $('#votesContainer').append(item);
             } catch (err) {
                 console.log(err);
+
+                var p = document.createElement('p');
+                var a = document.createElement('a');
+                p.innerHTML = 'We could not create a Youtube link for this video.  An attempt to create a link out of the raw submission data is shown below: ';
+
+                a.setAttribute('href', strawPollData.options[i]);
+                a.innerHTML = strawPollData.options[i];
+
+                $(item).append(p);
+                $(item).append(a);
             }
         }
         runSVG();
@@ -131,17 +179,6 @@
             var selected = [];
             $('.item input:checked').each(function() {
                 selected.push($(this).attr('name'));
-            });
-        }
-
-        function getStrawPoll(id, vote) {
-            $.ajax({
-                url: 'get-poll.php?search=' + id
-            }).done(function(response) {
-                response = JSON.parse(response);
-                for (var i = 0; i < response.length; i++) {
-
-                }
             });
         }
 
@@ -154,14 +191,78 @@
         $('input[type="checkbox"]').on('change', function() {
             $('input[type="checkbox"]').not(this).prop('checked', false);
             var items = $('input[type="checkbox"]').not(this);
-            for(var i = 0; i < items.length; i++){
+            for (var i = 0; i < items.length; i++) {
                 reset(items[i]);
             }
         });
 
-        
+        addPollToDB();
+    }
+
+    function addPollToDB() {
+        $.ajax({
+            url: 'data/addPollToDB.php?id=' + strawPollId
+        }).done(function(response) {
+            /*response = JSON.parse(response);
+            for (var i = 0; i < response.length; i++) {
+
+            }*/
+            debugger;
+        });
+    }
+
+    function getStrawPoll(id) {
+        $.ajax({
+            url: 'data/get-strawpoll.php?id=' + id
+        }).done(function(response) {
+            response = JSON.parse(response);
+            processStrawPollSubmit(response);
+        });
+    }
+
+    function initPollCountdown() {
 
     }
+
+    function getPollCountdown() {
+
+    }
+
+    $('#btn-vote').click(function() {
+        //strawPollId = getStrawPollId;
+        var pollData = '';
+        if (strawPollId) {
+            $.ajax({
+                url: 'data/get-strawpoll.php?id=' + strawPollId
+            }).done(function(response) {
+                debugger;
+                response = JSON.parse(response);
+                response.votes[parseInt($("input:checked").data('votenum'))] += 1;
+
+                //submit new results
+                var form_data = new FormData();
+
+                form_data.append('title', response.title);
+                form_data.append('id', response.id);
+                form_data.append('votes', JSON.stringify(response.votes));
+                form_data.append('options', JSON.stringify(response.options));
+
+                $.ajax({
+                    url: 'data/post-strawpoll-votes.php',
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    data: form_data,
+                    type: "POST"
+                }).done(function(response) {
+                    alert(response);
+                });
+            });
+        } else {
+            //create poll
+
+        }
+    });
     </script>
 </body>
 
@@ -176,5 +277,9 @@ var testResponse = {
     "dupcheck": "normal",
     "captcha": false
 };
+
+$(document).ready(function() {
+    init();
+});
 </script>
 <script src="svgcheckbx.js"></script>
