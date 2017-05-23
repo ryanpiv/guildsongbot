@@ -31,7 +31,6 @@ client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
             case '!smaktat':
                 e.message.channel.sendMessage('all on the floor');
                 break;
-
             case '!collectvotes':
                 getActivePoll();
                 break;
@@ -60,18 +59,20 @@ function formatYoutubeUrl(url) {
 }
 
 function getActivePoll() {
-    connection.query('SELECT * FROM polls where dateEnd > NOW()', function(error, results, fields) {
-        if (error) throw error;
-        if (results.length > 0) {
-        	var dateEnds = new Date(results[0].dateEnd);
-        	var currDate = new Date();
-        	var timeLeft = new Date();
-        	timeLeft.setDate(dateEnds.getDate() - currDate.getDate());
+    connection.query('SELECT * FROM polls where dateEnd > NOW() order by dateEnd desc limit 1', function(error, results, fields) {
+        if (error) {
+            console.log(error);
+        } else if (results.length > 0) {
+        	console.log(results);
+            var dateEnds = new Date(results[0].dateEnd);
+            var currDate = new Date();
+            var timeLeft = new Date();
+            timeLeft.setDate(dateEnds.getDate() - currDate.getDate());
 
-        	var timeLeftHours, timeLeftDays, timeLeftMinutes;
-        	timeLeftDays = timeLeft.getDate();
-        	timeLeftHours = timeLeft.getHours();
-        	timeLeftMinutes = timeLeft.getMinutes();
+            var timeLeftHours, timeLeftDays, timeLeftMinutes;
+            timeLeftDays = timeLeft.getDate();
+            timeLeftHours = timeLeft.getHours();
+            timeLeftMinutes = timeLeft.getMinutes();
 
             sendDiscordMessage('266749722692288512', 'An active poll is currently running: http://www.strawpoll.me/' + results[0].strawpollid + '.  The voting period will end on ' + dateEnds + '.  Time left to vote: ' + timeLeftDays + ' day(s), ' + timeLeftHours + ' hour(s), ' + timeLeftMinutes + ' minute(s).');
         } else {
@@ -81,9 +82,30 @@ function getActivePoll() {
             //second, add 4 weeks to last entry
             //if under 4 weeks, output time to next allowed voting period
             //else, allow a new voting period
-
-            //no active polls, create one
-            createPoll();
+            connection.query('SELECT * FROM polls order by id desc limit 1', function(error, results, fields) {
+                if (results && (endDatePlusFour > currDate)) {
+                    //still under the 4 week period
+                    var endDate = new Date(results[0].dateEnd);
+	                var startDate = new Date(results[0].dateStart);
+	                var currDate = new Date();
+	                var endDatePlusFour = new Date(endDate.getDate() + 28);
+	                var nextVoteDate = new Date(currDate + endDatePlusFour);
+                    sendDiscordMessage('266749722692288512', 'Voting is currently on cooldown for ' + endDatePlusFour - currDate + ' days.  Next vote on: ' + 
+                        nextVoteDate.getDate());
+                } else {
+                    //past the 4 week period
+                    //first, get the last poll id from db
+                    //second, query straw poll for poll data
+                    //third, record winner
+                    //fourth, begin new poll
+                    createPoll();
+                }
+                //voting period
+                //week 0 - 1
+                //week 2 - 5, winning period
+                //week 4 - 5, voting period
+                //week 5 - 9, winning period
+            });
         }
     });
 }
@@ -168,6 +190,6 @@ function addPollToDB(id) {
     });
 }
 
-function sendDiscordMessage(channelId, message){
-	client.Channels.get(channelId).sendMessage(message);
+function sendDiscordMessage(channelId, message) {
+    client.Channels.get(channelId).sendMessage(message);
 }
