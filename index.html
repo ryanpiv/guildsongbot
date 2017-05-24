@@ -12,31 +12,27 @@
 
 <body>
     <div id="votesContainer" class="container-fluid">
-        <div class="col-lg-3 col-md-3 lblTimer" id="lbl-timer">
-            <p id="p-lbl-timer"></p>
+        <div id="timer" class="col-lg-3 col-md-3 lblTimer">
+            <span id="days"></span>days
+            <span id="hours"></span>hours
+            <span id="minutes"></span>minutes
+            <span id="seconds"></span>seconds
         </div>
         <div class="col-lg-6 col-md-6 btnVote" id="btn-vote">
             <p>Vote</p>
         </div>
         <div class="col-lg-3 col-md-3 btnResults" id="btn-results">
-            <p id="p-btn-results">Results</p>
+            <p id="p-btn-results">Previous winner: </p>
         </div>
     </div>
     <script>
     var strawPollId = '';
     var votesArray = [];
+    var countDownTimer;
 
     function init() {
-        //1. Check for existing, active poll
-        //Polls have 1 week submission / voting periods and 1 month of active time
-        //2.a After the 1 week submission / voting period, display results time to next vote in results
-        //2.b Also, begin gathering new data to form next poll with.  After the 1 month of active time, the next poll will be created.
-
-        //There will always be discord data displayed, whether it be active to be voted upon or not.
-        //Results from previous poll are displayed
-        //Timer will either display active voting period or time to next voting period.
-        //Need a description to replace vote button during submission period.  Vote button should only say vote during voting period
         getActivePoll();
+        getLastPoll();
     }
 
     function getActivePoll() {
@@ -45,53 +41,66 @@
         }).done(function(data) {
             if (data.length > 0) {
                 //found an active poll
-                debugger;
                 strawPollId = data[0].strawpollid;
                 getStrawPoll(strawPollId);
+                getLastWinner(1);
             } else {
-                //no active polls, create one
-                debugger;
-                createPoll();
+                //no active polls
+                //get last poll
+                getLastWinner(0);
             }
         });
     }
 
-    function createPoll() {
+    function getLastPoll() {
         $.ajax({
-            url: 'data/get-discord-messages.php'
+            url: 'data/get-last-poll.php'
         }).done(function(data) {
-            var messages = JSON.parse(data);
-            var members = [];
-            votesArray = [];
-
-            messages.forEach(function(message) {
-                if (message.embeds) {
-                    if (message.embeds[0]) {
-                        if (checkDups(members, message.author.id) == false && message.author.id != '301368522834182145') {
-                            var vote = {};
-                            members.push(message.author.id);
-
-                            vote['author'] = message.author;
-                            vote['embed'] = message.embeds[0];
-                            votesArray.push(vote);
-                        }
-                    }
-                }
-            });
-            if (votesArray.length > 0) {
-                submitVotes(votesArray);
+            if (data.length > 0) {
+                countDownTimer = setInterval(function() {
+                    var tempDate = new Date(data[0].dateEnd);
+                    timeBetweenDates(tempDate);
+                }, 1000);
             }
         });
     }
 
-    function checkDups(members, memberCheck) {
-        var status = false;
-        members.forEach(function(member) {
-            if (memberCheck == member) {
-                status = true;
+    function getLastWinner(index) {
+        $.ajax({
+            url: 'data/get-last-winner.php'
+        }).done(function(data) {
+            if (data.length > 0) {
+                $('#p-btn-results').innerHTML += data[index].winner;
             }
         });
-        return status;
+    }
+
+    function timeBetweenDates(toDate) {
+        var dateEntered = toDate;
+        var now = new Date();
+        var difference = dateEntered.getTime() - now.getTime();
+
+        if (difference <= 0) {
+
+            // Timer done
+            clearInterval(timer);
+
+        } else {
+
+            var seconds = Math.floor(difference / 1000);
+            var minutes = Math.floor(seconds / 60);
+            var hours = Math.floor(minutes / 60);
+            var days = Math.floor(hours / 24);
+
+            hours %= 24;
+            minutes %= 60;
+            seconds %= 60;
+
+            $("#days").text(days);
+            $("#hours").text(hours);
+            $("#minutes").text(minutes);
+            $("#seconds").text(seconds);
+        }
     }
 
     function formatYoutubeUrl(url) {
@@ -99,53 +108,12 @@
         return videoid[1];
     }
 
-    function submitVotes(votesArray) {
-        var date = new Date();
-        var pollTitle = 'Disappointed_SongVote';
-        var form_data = new FormData();
-
-        form_data.append('title', pollTitle);
-
-        var optionsArray = [];
-        votesArray.forEach(function(vote, index) {
-            optionsArray.push(vote.embed.url);
-        });
-        form_data.append('options', JSON.stringify(optionsArray));
-
-        strawPollSubmit(form_data);
-        //processStrawPollSubmit(testResponse);
-    }
-
-    function strawPollSubmit(discordData) {
-        $.ajax({
-            url: 'data/post-strawpoll.php',
-            cache: false,
-            contentType: false,
-            processData: false,
-            data: discordData,
-            type: "POST"
-        }).done(function(response) {
-            processStrawPollSubmit(JSON.parse(response));
-
-        });
-    }
-
-    function processStrawPollSubmit(strawPollData) {
+    function processStrawPollData(strawPollData) {
         strawPollId = strawPollData.id;
         votesArray = strawPollData.votes;
         for (var i = 0; i < strawPollData.options.length; i++) {
             var item = document.createElement('div');
-            var input = document.createElement('input');
-
-            $(item).addClass('col-lg-3 col-md-3 item embed-responsive ac-custom ac-checkbox ac-checkmark');
-            $(lbl).attr('for', 'cb' + i);
-            $(input).attr('id', 'cb' + i);
-            $(input).attr('name', 'cb' + i);
-            $(input).attr('type', 'checkbox');
-            $(input).data('votenum', i);
-
-            $(item).append(lbl);
-            $(item).append(input);
+            $(item).addClass('col-lg-3 col-md-3 item embed-responsive');
 
             try {
                 var iframe = document.createElement('iframe');
@@ -164,122 +132,37 @@
 
                 var p = document.createElement('p');
                 var a = document.createElement('a');
-                p.innerHTML = 'We could not create a Youtube link for this video.  An attempt to create a link out of the raw submission data is shown below: ';
+                p.innerHTML = 'We could not create a Youtube link for this video.  An attempt to create a link out of the raw submission data is shown: ';
 
                 a.setAttribute('href', strawPollData.options[i]);
-                a.innerHTML = strawPollData.options[i];
+                a.innerHTML += strawPollData.options[i];
 
                 $(item).append(p);
                 $(item).append(a);
+                $('#votesContainer').append(item);
             }
         }
-        runSVG();
-
-        function getSelected() {
-            var selected = [];
-            $('.item input:checked').each(function() {
-                selected.push($(this).attr('name'));
-            });
-        }
-
-        function reset(el) {
-            Array.prototype.slice.call(el.parentNode.querySelectorAll('svg > path')).forEach(function(el) {
-                el.parentNode.removeChild(el);
-            });
-        }
-
-        $('input[type="checkbox"]').on('change', function() {
-            $('input[type="checkbox"]').not(this).prop('checked', false);
-            var items = $('input[type="checkbox"]').not(this);
-            for (var i = 0; i < items.length; i++) {
-                reset(items[i]);
-            }
-        });
-
-        addPollToDB();
-    }
-
-    function addPollToDB() {
-        $.ajax({
-            url: 'data/addPollToDB.php?id=' + strawPollId
-        }).done(function(response) {
-            /*response = JSON.parse(response);
-            for (var i = 0; i < response.length; i++) {
-
-            }*/
-            debugger;
-        });
     }
 
     function getStrawPoll(id) {
         $.ajax({
             url: 'data/get-strawpoll.php?id=' + id
         }).done(function(response) {
-            response = JSON.parse(response);
-            processStrawPollSubmit(response);
+            processStrawPollData(JSON.parse(response));
         });
     }
-
-    function initPollCountdown() {
-
-    }
-
-    function getPollCountdown() {
-
-    }
-
-    $('#btn-vote').click(function() {
-        //strawPollId = getStrawPollId;
-        var pollData = '';
-        if (strawPollId) {
-            $.ajax({
-                url: 'data/get-strawpoll.php?id=' + strawPollId
-            }).done(function(response) {
-                debugger;
-                response = JSON.parse(response);
-                response.votes[parseInt($("input:checked").data('votenum'))] += 1;
-
-                //submit new results
-                var form_data = new FormData();
-
-                form_data.append('title', response.title);
-                form_data.append('id', response.id);
-                form_data.append('votes', JSON.stringify(response.votes));
-                form_data.append('options', JSON.stringify(response.options));
-
-                $.ajax({
-                    url: 'data/post-strawpoll-votes.php',
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    data: form_data,
-                    type: "POST"
-                }).done(function(response) {
-                    alert(response);
-                });
-            });
-        } else {
-            //create poll
-
-        }
-    });
     </script>
 </body>
 
 </html>
 <script>
-var testResponse = {
-    "id": 12902641,
-    "title": "Disappointed_SongVote",
-    "options": ["https://www.youtube.com/watch?v=nqtobIpZt68", "http://www.worldstarhiphop.com/videos/video.php?v=wshhH6jc9bDhsizBFy8F", "https://www.youtube.com/watch?v=k85mRPqvMbE", "https://www.youtube.com/watch?v=XyzN9G0QWIM", "https://www.youtube.com/watch?v=6jJkdRaa04g", "https://www.youtube.com/watch?v=qRININJJodM", "https://www.youtube.com/watch?v=B0yGvypBwyA", "https://www.youtube.com/watch?v=jFfobGN9wyg", "https://www.youtube.com/watch?v=x4iBBfEHNaE", "https://www.youtube.com/watch?v=YidMngM4u1U", "https://www.youtube.com/watch?v=so5XDNmFtd4", "https://www.youtube.com/watch?v=4ntk7V6km3k"],
-    "votes": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "multi": false,
-    "dupcheck": "normal",
-    "captcha": false
-};
-
 $(document).ready(function() {
     init();
 });
+$('#btn-vote').click(function() {
+    window.open('http://www.strawpoll.me/' + strawPollId);
+});
+$('#btn-results').click(function() {
+    window.open('http://www.strawpoll.me/' + strawPollId + '/r');
+});
 </script>
-<script src="svgcheckbx.js"></script>

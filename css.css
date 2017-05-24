@@ -4,6 +4,8 @@ body{
 .item{
 	height:250 !important;
 	position: relative;
+	color:white;
+	text-align: center;
 }
 .btnVote, .lblTimer, .btnResults{
 	text-align: center;
@@ -13,6 +15,7 @@ body{
 .btnVote{
 	background-color: #e74c3c;
 	cursor:pointer;
+	font-size: 20px;
 }
 .lblTimer{
 	background-color: #2ecc71;
@@ -20,7 +23,22 @@ body{
 .btnResults{
 	background-color: #3498db;
 	cursor:pointer;
+	font-size: 20px;
 }
 .container-fluid{
 	padding:0 !important;
+}
+#timer {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  color: #747474;
+  letter-spacing: -1px;
+}
+#timer span {
+  font-size: 24px;
+  color: #333;
+  margin: 0 3px 0 15px;
+}
+#timer span:first-child {
+  margin-left: 0;
 }
