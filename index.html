@@ -22,7 +22,7 @@
             <p>Vote</p>
         </div>
         <div class="col-lg-3 col-md-3 btnResults" id="btn-results">
-            <p id="p-btn-results">Previous winner: </p>
+            <p id="p-btn-results">Previous Poll</p>
         </div>
     </div>
     <script>
@@ -76,7 +76,7 @@
     }
 
     function timeBetweenDates(toDate) {
-        var dateEntered = toDate;
+        var dateEntered = new Date(toDate + ' UTC');
         var now = new Date();
         var difference = dateEntered.getTime() - now.getTime();
 

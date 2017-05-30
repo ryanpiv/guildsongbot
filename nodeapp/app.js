@@ -10,8 +10,8 @@ var moment_tz = require('moment-timezone');
 const Events = Discordie.Events;
 const client = new Discordie();
 
-var songchannel = '300448798365450240'; //real channel
-//var songchannel = '266749722692288512'; //test channel
+//var songchannel = '300448798365450240'; //real channel
+var songchannel = '266749722692288512'; //test channel
 
 var job_WinnerTracker;
 //executes function to record winning poll at the end of 7 days
@@ -41,12 +41,18 @@ var connection = mysql.createConnection({
     database: 'disappointedsong'
 });
 
+connection.query('set time_zone="+00:00"', function(error, results, fields) {
+    if(error){
+        console.log('error setting the timezone: ' + error);
+    }
+});
+
 /*var aDate = new Date();
 console.log(moment(aDate).format('dddd, MMMM Do YYYY') + ' at ' + moment(aDate).utcOffset(0).format('h:mm:ss a'));*/
 
 client.connect({
-    //token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
-    token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
+    token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
+        //token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
 });
 
 client.Dispatcher.on(Events.GATEWAY_READY, e => {
@@ -71,6 +77,11 @@ client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
                     console.log('ping executing');
                     e.message.channel.sendMessage('PONG');
                     break;
+                case '!about':
+                    {
+                        e.message.channel.sendMessage('Once every ' + (votingPeriodDays + winningPeriodDays) + ' a new guild song is determined through an auto generated Strawpoll.  You have ' + winningPeriodDays + ' days to submit songs to this channel.  At the end of the timer, the poll is created.  You will then have ' + votingPeriodDays + ' days to vote on the submissions.  See the current or last poll submissions at http://disappointedsongvote.gear.host');
+                        break;
+                    }
                 case '!smaktat':
                     console.log('smaktat executing');
                     e.message.channel.sendMessage('all on the floor');
@@ -225,21 +236,22 @@ function fetchMessages(object) {
     //console.log(client.Messages.forChannel('300448798365450240'));
     //console.log(client);
     //bot.Channels.get('channelid').fetchMessages() // you can also use a raw channel object.
-    //var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
-    var options = [];
+    var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
+    //var options = [];
     var members = [];
     client.Channels.get(songchannel).fetchMessages().then(() => {
         var messages = client.Channels.get(songchannel).messages;
         for (var i = 0; i < messages.length; i++) {
-            if (messages[i].embeds.length > 0) {
-                if (checkDups(members, messages[i].author.id) == false && messages[i].author.id != '316216046107361281') {
-                    members.push(messages[i].author.id);
-                    options.push(messages[i].embeds[0].url);
+            if (messages[i].embeds.length > 0 && messages[i].author.id != '316216046107361281' && messages[i].author.id != '300810915584933888') {
+                if (checkValidYoutubeUrl(messages[i].embeds[0].url)) {
+                    //var url = formatYoutubeUrl(messages[i].embeds[0].url);
+                    if (checkDups(members, messages[i].author.id) == false) {
+                        //checkDups adds a user to an array based on your most recent posting.  aka if you're in the array you have a more recent post
+                        members.push(messages[i].author.id);
+                        options.push(messages[i].embeds[0].url + ' - ' + messages[i].embeds[0].title + ' by ' +
+                            messages[i].author.username);
+                    }
                 }
-                /*if (checkValidYoutubeUrl(messages[i].embeds[0].url)) {
-                    var url = formatYoutubeUrl(messages[i].embeds[0].url);
-                    console.log(url);
-                }*/
             }
         }
         object['options'] = options;
