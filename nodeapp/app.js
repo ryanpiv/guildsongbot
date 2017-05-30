@@ -10,8 +10,8 @@ var moment_tz = require('moment-timezone');
 const Events = Discordie.Events;
 const client = new Discordie();
 
-//var songchannel = '300448798365450240'; //real channel
-var songchannel = '266749722692288512'; //test channel
+var songchannel = '300448798365450240'; //real channel
+//var songchannel = '266749722692288512'; //test channel
 
 var job_WinnerTracker;
 //executes function to record winning poll at the end of 7 days
@@ -45,8 +45,8 @@ var connection = mysql.createConnection({
 console.log(moment(aDate).format('dddd, MMMM Do YYYY') + ' at ' + moment(aDate).utcOffset(0).format('h:mm:ss a'));*/
 
 client.connect({
-    token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
-        //token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
+    //token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
+    token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
 });
 
 client.Dispatcher.on(Events.GATEWAY_READY, e => {
@@ -225,8 +225,8 @@ function fetchMessages(object) {
     //console.log(client.Messages.forChannel('300448798365450240'));
     //console.log(client);
     //bot.Channels.get('channelid').fetchMessages() // you can also use a raw channel object.
-    var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
-    //var options = [];
+    //var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
+    var options = [];
     var members = [];
     client.Channels.get(songchannel).fetchMessages().then(() => {
         var messages = client.Channels.get(songchannel).messages;
@@ -330,7 +330,7 @@ function winner() {
                         sendDiscordMessage(songchannel, 'An error occurred while updating the Strawpoll winner: ' + error + ' <@105094681141977088>');
                     } else {
                         sendDiscordMessage(songchannel, 'The voting period has ended! The winner is... : ' + responseBody.options[index]);
-                        
+
                         var newPollDate = new Date();
                         newPollDate = moment(newPollDate).add(winningPeriodDays, 'days');
                         sendDiscordMessage(songchannel, 'The poll is on cooldown until ' + moment(newPollDate).format('MM-DD-YYYY') + '.  You may post your submissions for the next voting period now.');
@@ -378,7 +378,7 @@ function getCurrentInvasion(invasions, tz) {
 
             //currDate.getTime() <= end.getTime()
             var isAfter = moment(end).isAfter(currDate);
-            if ( isAfter ) {
+            if (isAfter) {
                 //invasion hasn't ended
                 //var timeDiff = end.getTime() - currDate.getTime();
                 var timeDiff = moment(end).diff(moment(currDate));
@@ -393,7 +393,7 @@ function getCurrentInvasion(invasions, tz) {
 
                 //currDate.getTime() >= start.getTime()
                 isAfter = moment(currDate).isAfter(start);
-                if ( isAfter ) {
+                if (isAfter) {
                     //invasion is currently happening
                     sendDiscordMessage(songchannel, 'An invasion is happening now!  It will end at ' + moment(end).tz(tz).format('h:mm a z') + '.  Time remaining: ' + timeLeft_End_Hours + ' hours ' + timeLeft_End_Minutes + ' minutes.');
                 } else {
