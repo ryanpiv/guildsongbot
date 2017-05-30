@@ -10,8 +10,8 @@ var moment_tz = require('moment-timezone');
 const Events = Discordie.Events;
 const client = new Discordie();
 
-//var songchannel = '300448798365450240'; //real channel
-var songchannel = '266749722692288512'; //test channel
+var songchannel = '300448798365450240'; //real channel
+//var songchannel = '266749722692288512'; //test channel
 
 var job_WinnerTracker;
 //executes function to record winning poll at the end of 7 days
@@ -42,7 +42,7 @@ var connection = mysql.createConnection({
 });
 
 connection.query('set time_zone="+00:00"', function(error, results, fields) {
-    if(error){
+    if (error) {
         console.log('error setting the timezone: ' + error);
     }
 });
@@ -51,8 +51,8 @@ connection.query('set time_zone="+00:00"', function(error, results, fields) {
 console.log(moment(aDate).format('dddd, MMMM Do YYYY') + ' at ' + moment(aDate).utcOffset(0).format('h:mm:ss a'));*/
 
 client.connect({
-    token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
-        //token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
+    //token: 'MzE2MjE2MDQ2MTA3MzYxMjgx.DAjXfQ.9UJJewQgiPFgYne--eF2SaL33OE' //test channel
+    token: 'MzAwODEwOTE1NTg0OTMzODg4.DAZIDw.RAsvejCdsKL986Vc6MdJEvpHV5c' //real channel
 });
 
 client.Dispatcher.on(Events.GATEWAY_READY, e => {
@@ -228,7 +228,7 @@ function getActivePoll() {
 
 function createPoll() {
     var myJSONObject = {};
-    myJSONObject['title'] = 'Disappointed_SongVote_BotTest';
+    myJSONObject['title'] = 'Disappointed_SongVote ' + moment(new Date()).format('dddd, MMMM Do YYYY');
     fetchMessages(myJSONObject);
 }
 
@@ -236,8 +236,8 @@ function fetchMessages(object) {
     //console.log(client.Messages.forChannel('300448798365450240'));
     //console.log(client);
     //bot.Channels.get('channelid').fetchMessages() // you can also use a raw channel object.
-    var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
-    //var options = [];
+    //var options = ['https://www.youtube.com/watch?v=nxZORz9zx6w']; //testing
+    var options = [];
     var members = [];
     client.Channels.get(songchannel).fetchMessages().then(() => {
         var messages = client.Channels.get(songchannel).messages;
