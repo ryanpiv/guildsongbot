@@ -19,7 +19,7 @@
             <span id="seconds"></span>seconds
         </div>
         <div class="col-lg-6 col-md-6 btnVote" id="btn-vote">
-            <p>Vote</p>
+            <p id="p-vote">Vote</p>
         </div>
         <div class="col-lg-3 col-md-3 btnResults" id="btn-results">
             <p id="p-btn-results">Previous Poll</p>
@@ -32,7 +32,7 @@
 
     function init() {
         getActivePoll();
-        getLastPoll();
+        //getLastPoll();
     }
 
     function getActivePoll() {
@@ -57,10 +57,21 @@
             url: 'data/get-last-poll.php'
         }).done(function(data) {
             if (data.length > 0) {
-                countDownTimer = setInterval(function() {
-                    var tempDate = new Date(data[0].dateEnd);
-                    timeBetweenDates(tempDate);
-                }, 1000);
+                var currDate = new Date();
+                var endDatePlusFour = new Date(data[0].dateEnd);
+                endDatePlusFour = endDatePlusFour.addDays(28);
+                if (Date.parse(endDatePlusFour) > Date.parse(currDate)) {
+                    countDownTimer = setInterval(function() {
+                        var tempDate = new Date(endDatePlusFour);
+                        timeBetweenDates(tempDate);
+                    }, 1000);
+                } else {
+                    countDownTimer = setInterval(function() {
+                        var tempDate = new Date(data[0].dateEnd);
+                        timeBetweenDates(tempDate);
+                    }, 1000);
+                }
+
             }
         });
     }
@@ -71,6 +82,25 @@
         }).done(function(data) {
             if (data.length > 0) {
                 $('#p-btn-results').innerHTML += data[index].winner;
+            }
+            strawPollId = data[0].strawpollid;
+            getStrawPoll(strawPollId);
+
+            var currDate = new Date();
+            var endDatePlusFour = new Date(data[0].dateEnd);
+            endDatePlusFour = endDatePlusFour.addDays(28);
+            if (Date.parse(endDatePlusFour) > Date.parse(currDate)) {
+                countDownTimer = setInterval(function() {
+                    var tempDate = new Date(endDatePlusFour);
+                    timeBetweenDates(tempDate);
+                }, 1000);
+                $('#p-vote').text('Polls currently on cooldown');
+            } else {
+                countDownTimer = setInterval(function() {
+                    var tempDate = new Date(data[0].dateEnd);
+                    timeBetweenDates(tempDate);
+                }, 1000);
+                $('#p-vote').text('Vote');
             }
         });
     }
@@ -158,6 +188,11 @@
 <script>
 $(document).ready(function() {
     init();
+    Date.prototype.addDays = function(days) {
+        var dat = new Date(this.valueOf());
+        dat.setDate(dat.getDate() + days);
+        return dat;
+    }
 });
 $('#btn-vote').click(function() {
     window.open('http://www.strawpoll.me/' + strawPollId);

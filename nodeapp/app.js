@@ -143,7 +143,7 @@ client.Dispatcher.on(Events.MESSAGE_CREATE, e => {
                     break;
                 case '!commands':
                     console.log('commands executing');
-                    sendDiscordMessage(songchannel, 'You can say: !smaktat, !collectVotes, !previousWinner, or !invasion <timezone> (EST, CST, MST, PST, GMT)');
+                    sendDiscordMessage(songchannel, 'You can say: !smaktat, !songVote, !about, !previousWinner, or !invasion <timezone> (EST, CST, MST, PST, GMT)');
                     break;
                 default:
                     console.log('default executing');
