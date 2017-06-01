@@ -31,8 +31,9 @@
     var countDownTimer;
 
     function init() {
-        getActivePoll();
+        //getActivePoll();
         //getLastPoll();
+        getDiscordMessages();
     }
 
     function getActivePoll() {
@@ -179,6 +180,60 @@
             url: 'data/get-strawpoll.php?id=' + id
         }).done(function(response) {
             processStrawPollData(JSON.parse(response));
+        });
+    }
+
+    function checkDups(members, memberCheck) {
+        var status = false;
+        members.forEach(function(member) {
+            if (memberCheck == member) {
+                status = true;
+            }
+        });
+        return status;
+    }
+
+    function getDiscordMessages() {
+        $.ajax({
+            url: 'data/get-discord-messages.php'
+        }).done(function(data) {
+            var messages = JSON.parse(data);
+            var members = [];
+            votesArray = [];
+
+            messages.forEach(function(message) {
+                if (message.embeds) {
+                    if (message.embeds[0]) {
+                        if (checkDups(members, message.author.id) == false && message.author.id != '301368522834182145') {
+                            var vote = {};
+                            members.push(message.author.id);
+
+                            vote['author'] = message.author;
+                            vote['embed'] = message.embeds[0];
+                            votesArray.push(vote);
+                        }
+                    }
+                }
+            });
+            if (votesArray) {
+                for (var i = 0; i < votesArray.length; i++) {
+                    try {
+                        var item = document.createElement('div');
+                        var iframe = document.createElement('iframe');
+
+                        $(iframe).addClass('embed-responsive-item');
+                        $(item).addClass('col-lg-3 col-md-3 item embed-responsive');
+
+                        var yt_id = formatYoutubeUrl(votesArray[i].embed.url);
+                        $(iframe).attr('src', 'https://www.youtube.com/embed/' + yt_id);
+
+                        $(item).append(iframe);
+                        $('#votesContainer').append(item);
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }
+            }
         });
     }
     </script>
