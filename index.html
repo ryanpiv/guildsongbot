@@ -22,18 +22,20 @@
             <p id="p-vote">Vote</p>
         </div>
         <div class="col-lg-3 col-md-3 btnResults" id="btn-results">
-            <p id="p-btn-results">Previous Poll</p>
+            <p id="p-btn-results">Previous Winner</p>
         </div>
     </div>
     <script>
     var strawPollId = '';
+    var previousWinner = '';
     var votesArray = [];
     var countDownTimer;
 
     function init() {
         //getActivePoll();
-        //getLastPoll();
+        getLastPoll();
         getDiscordMessages();
+        getLastWinner();
     }
 
     function getActivePoll() {
@@ -58,7 +60,7 @@
             url: 'data/get-last-poll.php'
         }).done(function(data) {
             if (data.length > 0) {
-                var currDate = new Date();
+                var currDate = new Date(new Date().toISOString());
                 var endDatePlusFour = new Date(data[0].dateEnd);
                 endDatePlusFour = endDatePlusFour.addDays(28);
                 if (Date.parse(endDatePlusFour) > Date.parse(currDate)) {
@@ -77,31 +79,21 @@
         });
     }
 
-    function getLastWinner(index) {
+    function getLastWinner() {
         $.ajax({
             url: 'data/get-last-winner.php'
         }).done(function(data) {
             if (data.length > 0) {
-                $('#p-btn-results').innerHTML += data[index].winner;
-            }
-            strawPollId = data[0].strawpollid;
-            getStrawPoll(strawPollId);
-
-            var currDate = new Date();
-            var endDatePlusFour = new Date(data[0].dateEnd);
-            endDatePlusFour = endDatePlusFour.addDays(28);
-            if (Date.parse(endDatePlusFour) > Date.parse(currDate)) {
-                countDownTimer = setInterval(function() {
-                    var tempDate = new Date(endDatePlusFour);
-                    timeBetweenDates(tempDate);
-                }, 1000);
-                $('#p-vote').text('Polls currently on cooldown');
-            } else {
-                countDownTimer = setInterval(function() {
-                    var tempDate = new Date(data[0].dateEnd);
-                    timeBetweenDates(tempDate);
-                }, 1000);
-                $('#p-vote').text('Vote');
+            	if(data[1]){
+            		if(data[1].winner){
+            			previousWinner = data[1].winner;
+            		} else {
+            			previousWinner = data[0].winner;
+            		}
+            	} else {
+            		previousWinner += data[0].winner;
+            		strawPollId = data[0].strawpollid;
+            	}
             }
         });
     }
@@ -217,21 +209,28 @@
             });
             if (votesArray) {
                 for (var i = 0; i < votesArray.length; i++) {
+                	var item = document.createElement('div');
+                    
                     try {
-                        var item = document.createElement('div');
-                        var iframe = document.createElement('iframe');
+                    	var iframe = document.createElement('iframe');
 
-                        $(iframe).addClass('embed-responsive-item');
-                        $(item).addClass('col-lg-3 col-md-3 item embed-responsive');
-
+                    	$(iframe).addClass('embed-responsive-item');
+                    	$(item).addClass('col-lg-3 col-md-3 item embed-responsive');
                         var yt_id = formatYoutubeUrl(votesArray[i].embed.url);
                         $(iframe).attr('src', 'https://www.youtube.com/embed/' + yt_id);
-
                         $(item).append(iframe);
-                        $('#votesContainer').append(item);
                     } catch (err) {
                         console.log(err);
+                        var p = document.createElement('p');
+                        p.innerHTML = 'Attempt to create link from non-Youtube URL below';
+                        var a = document.createElement('a');
+                        a.setAttribute('href', votesArray[i].embed.url);
+                        a.innerHTML = votesArray[i].embed.url;
+                        $(item).append(p);
+                        $(item).append(a);
                     }
+                    
+                    $('#votesContainer').append(item);
                 }
             }
         });
@@ -253,6 +252,7 @@ $('#btn-vote').click(function() {
     window.open('http://www.strawpoll.me/' + strawPollId);
 });
 $('#btn-results').click(function() {
-    window.open('http://www.strawpoll.me/' + strawPollId + '/r');
+    //window.open('http://www.strawpoll.me/' + strawPollId + '/r');
+    window.open(previousWinner);
 });
 </script>
